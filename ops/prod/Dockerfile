@@ -1,9 +1,9 @@
 FROM ruby:2.5.4
 MAINTAINER Ramon Tayag <ramon.tayag@gmail.com>
 
-RUN curl -sS https://dl.yarnpkg.com/debian/pubkey.gpg | apt-key add -
-RUN curl -sL https://deb.nodesource.com/setup_8.x | bash
-RUN echo "deb https://dl.yarnpkg.com/debian/ stable main" | tee /etc/apt/sources.list.d/yarn.list
+RUN curl -sS https://dl.yarnpkg.com/debian/pubkey.gpg | apt-key add - && \
+  curl -sL https://deb.nodesource.com/setup_10.x | bash && \
+  echo "deb https://dl.yarnpkg.com/debian/ stable main" | tee /etc/apt/sources.list.d/yarn.list
 
 RUN apt-get update -qq && \
   apt-get upgrade -y && \
@@ -15,9 +15,6 @@ RUN apt-get update -qq && \
   postgresql-client \
   nodejs \
   yarn
-
-# Workaround for lack of new OpenSSL support https://github.com/oleganza/btcruby/issues/29
-RUN ln -nfs /usr/lib/x86_64-linux-gnu/libssl.so.1.0.2 /usr/lib/x86_64-linux-gnu/libssl.so
 
 # Keep image size small:
 RUN apt-get clean && \
@@ -40,7 +37,8 @@ RUN mkdir $BUNDLE_PATH
 ADD Gemfile $APP/Gemfile
 ADD Gemfile.lock $APP/Gemfile.lock
 
-RUN gem install bundler && \
+RUN gem update --system 3.1.3 && gem update --system && \
+  gem install bundler:2.1.4 && \
   bundle install --jobs 20 --retry 5 --without development test
 
 ADD . $APP
